@@ -5,7 +5,7 @@ RFID(Radio-Frequency Identification) is an automatic identification system that 
 
  
 An RFID System consists of a reader and one or multiple tags.
-When a user presents his RFID badge to the reader, the system consults the dictionary and, based on the associated permission, can activate or not activate a relay.
+When a user presents his RFID badge to the reader, the system consults the dictionary and, based on the associated permission, can activate or not activate a relay. We have three modes, such that:
 
 1)Authorized access is enabled in case of a positive match between the RFID code and the permission in the dictionary, the relay is activated.
 
