@@ -4,6 +4,7 @@ from google.oauth2.service_account import Credentials
 
 # Load credentials from Streamlit secrets
 try:
+    # Some code that may cause an error
     creds_dict = st.secrets["google_credentials"]
     creds = Credentials.from_service_account_info(creds_dict)
     client = gspread.authorize(creds)
