@@ -3,15 +3,15 @@ import pandas as pd
 import gspread
 from google.oauth2.service_account import Credentials
 
-# 🔹 Define Admin Credentials
+# Define Admin Credentials
 ADMIN_USERNAME = "SAMS"
 ADMIN_PASSWORD = "SAMS"  # Change this!
 
-# 🔹 Initialize Session State for Login
+#  Initialize Session State for Login
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False  # Default: Not logged in
 
-# 🔹 Login Page
+# Login Page
 st.title("Admin Login")
 
 if not st.session_state.logged_in:  # Show login form only if not logged in
@@ -27,9 +27,9 @@ if not st.session_state.logged_in:  # Show login form only if not logged in
         else:
             st.error("Incorrect username or password!")
 else:
-    # 🔹 Show Google Sheets Data (Only After Login)
+    #  Show Google Sheets Data (Only After Login)
     try:
-        st.write("🔹 Loading Google Credentials...")
+        st.write(" Loading Google Credentials...")
         creds_dict = dict(st.secrets["google_credentials"])
         creds = Credentials.from_service_account_info(creds_dict, scopes=["https://www.googleapis.com/auth/spreadsheets.readonly"])
         client = gspread.authorize(creds)
@@ -42,12 +42,12 @@ else:
         if data:
             df = pd.DataFrame(data[1:], columns=data[0])  # Convert to DataFrame
 
-            # 🔹 Column Selection for Filtering
+            #  Column Selection for Filtering
             selected_column = st.selectbox("Select Column to Filter", df.columns)
             unique_values = df[selected_column].unique()
             filter_value = st.selectbox(f"Filter by {selected_column}", unique_values)
 
-            # 🔹 Apply Filter
+            #  Apply Filter
             filtered_data = df[df[selected_column] == filter_value]
             st.write("### Filtered Data")
             st.table(filtered_data)
@@ -58,7 +58,7 @@ else:
     except Exception as e:
         st.error(f"Error Fetching Google Sheets: {e}")
 
-    # 🔹 Logout Button
+    # Logout Button
     if st.button("Logout"):
         st.session_state.logged_in = False  # Reset login state
         st.rerun()  # Refresh to show login page
