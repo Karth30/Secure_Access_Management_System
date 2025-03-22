@@ -3,7 +3,7 @@ import requests
 import pandas as pd
 
 # ---- GOOGLE APPS SCRIPT URL ----
-GAS_URL = "https://script.google.com/macros/s/AKfycbwycsq2zReJKQ3GZPxMRGDqK3NIXIl6ePNpmos0Etlpf716vWZo4jq2czSQPwtu8fQ/exec"
+GAS_URL = "https://script.google.com/macros/s/AKfycbwUXKz7vMz2HYWyWfRIMrWkMw9GDMRefFFLcsxySn_3Im18ANgzRtj6PhZSpxlbrj5N/exec"
 
 # ---- ADMIN LOGIN ----
 ADMIN_USERNAME = "SAMS"
