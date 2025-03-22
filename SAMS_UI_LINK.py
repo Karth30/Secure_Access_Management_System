@@ -1,116 +1,68 @@
 import streamlit as st
-import requests
+import gspread
+from google.oauth2.service_account import Credentials
 import pandas as pd
 
-# ---- GOOGLE APPS SCRIPT URL ----
-GAS_URL = "https://script.google.com/macros/s/AKfycbxagzKZR3ypBOIrRzNojwPpgrhN4x1SbyyMISkkli6VaN2yR_eH3bmjBMNpFPCp-YnP/exec"
-
-# ---- ADMIN LOGIN ----
+# 🔹 Define Admin Credentials
 ADMIN_USERNAME = "SAMS"
-ADMIN_PASSWORD = "SAMS"  # Change this to a secure password!
+ADMIN_PASSWORD = "SAMS"  # Change this!
 
-st.set_page_config(page_title="RFID Access Control", layout="wide")
+# 🔹 Login Page
+st.title(" Admin Login")
 
-# ---- SESSION STATE ----
-if "logged_in" not in st.session_state:
-    st.session_state.logged_in = False
+# Input fields
+username = st.text_input("Username", "")
+password = st.text_input("Password", type="password", key="password")
+login_btn = st.button("Login")
 
-# ---- LOGIN PAGE ----
-def login():
-    st.title("Admin Login")
-    username = st.text_input("Username", key="username")
-    password = st.text_input("Password", key="password", type="password")  # ✅ FIXED HERE
+#  Authentication
+if login_btn:
+    if username == ADMIN_USERNAME and password == ADMIN_PASSWORD:
+        st.success(" Logged in successfully!")
 
-    if st.button("Login"):
-        if username == ADMIN_USERNAME and password == ADMIN_PASSWORD:
-            st.session_state.logged_in = True
-            st.success("Login successful! Redirecting...")
-            st.rerun()
-        else:
-            st.error("Incorrect credentials!")
+        # Debug: Check login is working
+        st.write("🔹 Login Successful! Now Fetching Google Sheets Data...")
 
-if not st.session_state.logged_in:
-    login()
-    st.stop()
+        #  Load Google Sheets API Credentials
+        try:
+            st.write("🔹 Loading Google Credentials...")  # Debug
+            creds_dict = dict(st.secrets["google_credentials"])  #  FIXED THIS LINE
+            creds = Credentials.from_service_account_info(creds_dict, scopes=["https://www.googleapis.com/auth/spreadsheets.readonly"])
+            client = gspread.authorize(creds)
+            st.success(" Google Credentials Loaded Successfully!")
 
-# ---- MAIN DASHBOARD ----
-st.title("RFID Access Control System")
+            #  Fetch Data from Google Sheets
+            SHEET_ID = "1c-8nJVLV49nDyXtuPLbOQs9c4SdWSR9HTYzGyJsFClI"  # REPLACE WITH YOUR SHEET ID
+            st.write("🔹 Connecting to Google Sheets...")  # Debug
+            sheet = client.open_by_key(SHEET_ID).sheet1
+            st.write(" Google Sheets Connection Established!")  # Debug
 
-# ---- Fetch Data from Google Sheet ----
-@st.cache_data(ttl=30)
-def fetch_data():
-    response = requests.get(GAS_URL)
+            #  Get all rows
+            data = sheet.get_all_values()  
+            if data:
+                # Convert to DataFrame
+                df = pd.DataFrame(data[1:], columns=data[0])
 
-    if response.status_code != 200:
-        st.error("Failed to fetch data from Google Sheets!")
-        return pd.DataFrame()  # Return empty DataFrame on error
+                st.sidebar.header("🔍 Filter Logs")
 
-    try:
-        json_data = response.json()
+                # Dynamically get column names for filtering
+                filter_col = st.sidebar.selectbox("Select Column to Filter", df.columns)
+                unique_values = df[filter_col].unique().tolist()
+                selected_value = st.sidebar.selectbox(f"Select {filter_col} Value", ["All"] + unique_values)
 
-        if not json_data or not isinstance(json_data, list):
-            st.warning("No data found in Google Sheets!")
-            return pd.DataFrame()
+                # Apply filtering
+                if selected_value != "All":
+                    df = df[df[filter_col] == selected_value]
 
-        return pd.DataFrame(json_data)
+                # Display Filtered Data
+                st.write("**🔹 Filtered Google Sheets Data:**")
+                st.table(df)
 
-    except ValueError:
-        st.error("Error parsing JSON response!")
-        return pd.DataFrame()
+            else:
+                st.warning(" No data found in the sheet.")
 
-df = fetch_data()
+        except Exception as e:
+            st.error(f" Error Fetching Google Sheets: {e}")
 
-# ---- FILTERING OPTIONS ----
-st.sidebar.header("Filter Logs")
-
-if not df.empty:
-    # Convert Timestamp column to datetime for filtering
-    df.columns = ["Timestamp", "RFID Tag ID", "Time Scanned", "Access State"]
-
-    # Dropdown Filters
-    unique_tags = df["RFID Tag ID"].unique()
-    unique_states = df["Access State"].unique()
-
-    selected_filter = st.sidebar.radio("Filter By:", ["All", "RFID Tag", "Timestamp", "Access State"])
-
-    if selected_filter == "RFID Tag":
-        selected_tag = st.sidebar.selectbox("Select RFID Tag", unique_tags)
-        df = df[df["RFID Tag ID"] == selected_tag]
-
-    elif selected_filter == "Timestamp":
-        start_date = st.sidebar.date_input("Start Date", df["Timestamp"].min())
-        end_date = st.sidebar.date_input("End Date", df["Timestamp"].max())
-        df = df[(df["Timestamp"] >= pd.to_datetime(start_date)) & (df["Timestamp"] <= pd.to_datetime(end_date))]
-
-    elif selected_filter == "Access State":
-        selected_state = st.sidebar.selectbox("Select Access State", unique_states)
-        df = df[df["Access State"] == selected_state]
-
-    st.dataframe(df, use_container_width=True)
-
-else:
-    st.warning("No data available.")
-
-# ---- Update Access State ----
-st.subheader("Update Access State")
-
-tag_id = st.text_input("Enter RFID Tag ID to Update")
-new_state = st.selectbox("Select New Access State", ["Accepted", "Denied"])
-
-if st.button("Update Access State"):
-    if tag_id:
-        update_data = {"tag": tag_id, "access_state": new_state}
-        response = requests.post(GAS_URL, json=update_data)
-
-        if response.status_code == 200:
-            st.success(f"Access state for {tag_id} updated to {new_state} successfully!")
-            st.rerun()  # Auto-refresh app
-        else:
-            st.error("Failed to update access state!")
     else:
-        st.warning("Please enter an RFID Tag ID.")
-
-# ---- Logout ----
-if st.button("Logout"):
-    st.session_state.logged_in = False
-    st.rerun()
+        st.error("Incorrect username or password!")
