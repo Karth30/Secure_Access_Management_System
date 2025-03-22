@@ -57,9 +57,9 @@ if st.session_state.authenticated:
             if row[0] == selected_user:
                 users_sheet.update_cell(i+1, 3, new_status)  # Update Access State
                 st.success(f" Updated {selected_user} to {new_status}")
-                st.experimental_rerun()  # Refresh UI
+                st.rerun()  # Refresh UI
 
     # ** Logout Button**
     if st.button("Logout"):
         st.session_state.authenticated = False
-        st.experimental_rerun()
+        st.rerun()
