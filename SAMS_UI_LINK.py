@@ -19,7 +19,7 @@ if "logged_in" not in st.session_state:
 def login():
     st.title("Admin Login")
     username = st.text_input("Username", key="username")
-    password = st.text_input("Password", type="password", key="password", type="password")
+    password = st.text_input("Password", key="password", type="password")  # ✅ FIXED HERE
 
     if st.button("Login"):
         if username == ADMIN_USERNAME and password == ADMIN_PASSWORD:
