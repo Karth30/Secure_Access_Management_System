@@ -17,17 +17,17 @@ if "logged_in" not in st.session_state:
 
 # ---- LOGIN PAGE ----
 def login():
-    st.title(" Admin Login")
+    st.title("Admin Login")
     username = st.text_input("Username", key="username")
     password = st.text_input("Password", type="password", key="password")
 
     if st.button("Login"):
         if username == ADMIN_USERNAME and password == ADMIN_PASSWORD:
             st.session_state.logged_in = True
-            st.success(" Login successful!")
+            st.success("Login successful!")
             st.rerun()
         else:
-            st.error(" Incorrect credentials!")
+            st.error("❌ Incorrect credentials!")
 
 if not st.session_state.logged_in:
     login()
@@ -40,10 +40,22 @@ st.title(" RFID Access Control")
 @st.cache_data(ttl=30)
 def fetch_data():
     response = requests.get(GAS_URL)
-    if response.status_code == 200:
-        return pd.DataFrame(response.json())
-    else:
+    
+    if response.status_code != 200:
         st.error(" Failed to fetch data from Google Sheets!")
+        return pd.DataFrame()  # Return empty DataFrame on error
+
+    try:
+        json_data = response.json()
+
+        if not json_data or not isinstance(json_data, list):  # Check if data is empty or incorrect format
+            st.warning("No data found in Google Sheets!")
+            return pd.DataFrame()
+
+        return pd.DataFrame(json_data)
+    
+    except ValueError:  # Handles JSON decoding errors
+        st.error(" Error parsing JSON response!")
         return pd.DataFrame()
 
 df = fetch_data()
@@ -51,6 +63,8 @@ df = fetch_data()
 # ---- Display Data ----
 if not df.empty:
     st.dataframe(df, use_container_width=True)
+else:
+    st.warning(" No data available.")
 
 # ---- Update Access State ----
 st.subheader(" Update Access State")
@@ -69,7 +83,7 @@ if st.button("Update Access State"):
         else:
             st.error(" Failed to update access state!")
     else:
-        st.warning("⚠ Please enter an RFID Tag ID.")
+        st.warning(" Please enter an RFID Tag ID.")
 
 # ---- Logout ----
 if st.button(" Logout"):
