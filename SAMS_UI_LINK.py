@@ -1,65 +1,77 @@
 import streamlit as st
-import gspread
-from google.oauth2.service_account import Credentials
+import requests
+import pandas as pd
 
-# ** Define Admin Credentials**
+# ---- GOOGLE APPS SCRIPT URL ----
+GAS_URL = "https://script.google.com/macros/s/AKfycbwycsq2zReJKQ3GZPxMRGDqK3NIXIl6ePNpmos0Etlpf716vWZo4jq2czSQPwtu8fQ/exec"
+
+# ---- ADMIN LOGIN ----
 ADMIN_USERNAME = "SAMS"
-ADMIN_PASSWORD = "SAMS"  # Change this to a secure password
+ADMIN_PASSWORD = "SAMS"  # Change this to a secure password!
 
-# ** Authentication Function**
-def authenticate(username, password):
-    return username == ADMIN_USERNAME and password == ADMIN_PASSWORD
+st.set_page_config(page_title="RFID Access System", page_icon="")
 
-# ** Session State for Login**
-if "authenticated" not in st.session_state:
-    st.session_state.authenticated = False
+# ---- SESSION STATE ----
+if "logged_in" not in st.session_state:
+    st.session_state.logged_in = False
 
-# ** Login Form**
-if not st.session_state.authenticated:
+# ---- LOGIN PAGE ----
+def login():
     st.title(" Admin Login")
-    username = st.text_input("Username")
-    password = st.text_input("Password", type="password")
+    username = st.text_input("Username", key="username")
+    password = st.text_input("Password", type="password", key="password")
+
     if st.button("Login"):
-        if authenticate(username, password):
-            st.session_state.authenticated = True
+        if username == ADMIN_USERNAME and password == ADMIN_PASSWORD:
+            st.session_state.logged_in = True
+            st.success(" Login successful!")
             st.rerun()
         else:
-            st.error(" Invalid Credentials!")
+            st.error(" Incorrect credentials!")
 
-# ** If Logged In, Show Dashboard**
-if st.session_state.authenticated:
-    st.title(" Access Management System")
+if not st.session_state.logged_in:
+    login()
+    st.stop()
 
-    # ** Load Google Credentials**
-    SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
-    creds = Credentials.from_service_account_info(st.secrets["google_credentials"], scopes=SCOPES)
-    client = gspread.authorize(creds)
+# ---- MAIN DASHBOARD ----
+st.title(" RFID Access Control")
 
-    # ** Open Users Sheet**
-    SHEET_ID = "1c-8nJVLV49nDyXtuPLbOQs9c4SdWSR9HTYzGyJsFClI"
-    users_sheet = client.open_by_key(SHEET_ID).worksheet("Sheet1")
+# ---- Fetch Data from Google Sheet ----
+@st.cache_data(ttl=30)
+def fetch_data():
+    response = requests.get(GAS_URL)
+    if response.status_code == 200:
+        return pd.DataFrame(response.json())
+    else:
+        st.error(" Failed to fetch data from Google Sheets!")
+        return pd.DataFrame()
 
-    # ** Load Users Data**
-    users_data = users_sheet.get_all_values()
-    users_dict = {row[0]: row[1:] for row in users_data[1:]}  # Convert to Dictionary
+df = fetch_data()
 
-    # ** Display User Table**
-    st.write("### Current Users")
-    st.table(users_data)
+# ---- Display Data ----
+if not df.empty:
+    st.dataframe(df, use_container_width=True)
 
-    # ** Modify Access**
-    st.write("### Modify Access")
-    selected_user = st.selectbox("Select User", list(users_dict.keys()))
-    new_status = st.radio("Change Access State", ["Accepted", "Denied"])
+# ---- Update Access State ----
+st.subheader(" Update Access State")
 
-    if st.button("Update Access"):
-        for i, row in enumerate(users_data):
-            if row[0] == selected_user:
-                users_sheet.update_cell(i+1, 3, new_status)  # Update Access State
-                st.success(f" Updated {selected_user} to {new_status}")
-                st.rerun()  # Refresh UI
+tag_id = st.text_input(" Enter RFID Tag ID to Update")
+new_state = st.selectbox(" Select New Access State", ["Accepted", "Denied"])
 
-    # ** Logout Button**
-    if st.button("Logout"):
-        st.session_state.authenticated = False
-        st.rerun()
+if st.button("Update Access State"):
+    if tag_id:
+        update_data = {"tag": tag_id, "access_state": new_state}
+        response = requests.post(GAS_URL, json=update_data)
+
+        if response.status_code == 200:
+            st.success("Access state updated successfully!")
+            st.rerun()  # Rerun the app after update
+        else:
+            st.error(" Failed to update access state!")
+    else:
+        st.warning("⚠ Please enter an RFID Tag ID.")
+
+# ---- Logout ----
+if st.button(" Logout"):
+    st.session_state.logged_in = False
+    st.rerun()
