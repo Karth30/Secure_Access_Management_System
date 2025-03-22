@@ -1,68 +1,63 @@
 import streamlit as st
 import gspread
 from google.oauth2.service_account import Credentials
-import pandas as pd
 
 # 🔹 Define Admin Credentials
 ADMIN_USERNAME = "SAMS"
 ADMIN_PASSWORD = "SAMS"  # Change this!
 
+# 🔹 Initialize Session State for Login
+if "logged_in" not in st.session_state:
+    st.session_state.logged_in = False  # Default: Not logged in
+
 # 🔹 Login Page
-st.title(" Admin Login")
+st.title("Admin Login")
 
-# Input fields
-username = st.text_input("Username", "")
-password = st.text_input("Password", type="password", key="password")
-login_btn = st.button("Login")
+if not st.session_state.logged_in:  # Show login form only if not logged in
+    username = st.text_input("Username", "")
+    password = st.text_input("Password", type="password")
+    login_btn = st.button("Login")
 
-#  Authentication
-if login_btn:
-    if username == ADMIN_USERNAME and password == ADMIN_PASSWORD:
-        st.success(" Logged in successfully!")
+    if login_btn:
+        if username == ADMIN_USERNAME and password == ADMIN_PASSWORD:
+            st.session_state.logged_in = True  # Store login state
+            st.success("Logged in successfully!")
+            st.rerun()  # Refresh to show content
+        else:
+            st.error("Incorrect username or password!")
+else:
+    # 🔹 Show Google Sheets Data (Only After Login)
+    try:
+        st.write("🔹 Loading Google Credentials...")
+        creds_dict = dict(st.secrets["google_credentials"])
+        creds = Credentials.from_service_account_info(creds_dict, scopes=["https://www.googleapis.com/auth/spreadsheets.readonly"])
+        client = gspread.authorize(creds)
 
-        # Debug: Check login is working
-        st.write("🔹 Login Successful! Now Fetching Google Sheets Data...")
+        # Fetch Data
+        SHEET_ID = "1c-8nJVLV49nDyXtuPLbOQs9c4SdWSR9HTYzGyJsFClI"  # Replace with your Sheet ID
+        sheet = client.open_by_key(SHEET_ID).sheet1
+        data = sheet.get_all_values()
 
-        #  Load Google Sheets API Credentials
-        try:
-            st.write("🔹 Loading Google Credentials...")  # Debug
-            creds_dict = dict(st.secrets["google_credentials"])  #  FIXED THIS LINE
-            creds = Credentials.from_service_account_info(creds_dict, scopes=["https://www.googleapis.com/auth/spreadsheets.readonly"])
-            client = gspread.authorize(creds)
-            st.success(" Google Credentials Loaded Successfully!")
+        if data:
+            df = pd.DataFrame(data[1:], columns=data[0])  # Convert to DataFrame
 
-            #  Fetch Data from Google Sheets
-            SHEET_ID = "1c-8nJVLV49nDyXtuPLbOQs9c4SdWSR9HTYzGyJsFClI"  # REPLACE WITH YOUR SHEET ID
-            st.write("🔹 Connecting to Google Sheets...")  # Debug
-            sheet = client.open_by_key(SHEET_ID).sheet1
-            st.write(" Google Sheets Connection Established!")  # Debug
+            # 🔹 Column Selection for Filtering
+            selected_column = st.selectbox("Select Column to Filter", df.columns)
+            unique_values = df[selected_column].unique()
+            filter_value = st.selectbox(f"Filter by {selected_column}", unique_values)
 
-            #  Get all rows
-            data = sheet.get_all_values()  
-            if data:
-                # Convert to DataFrame
-                df = pd.DataFrame(data[1:], columns=data[0])
+            # 🔹 Apply Filter
+            filtered_data = df[df[selected_column] == filter_value]
+            st.write("### Filtered Data")
+            st.table(filtered_data)
 
-                st.sidebar.header("🔍 Filter Logs")
+        else:
+            st.warning("No data found in the sheet.")
 
-                # Dynamically get column names for filtering
-                filter_col = st.sidebar.selectbox("Select Column to Filter", df.columns)
-                unique_values = df[filter_col].unique().tolist()
-                selected_value = st.sidebar.selectbox(f"Select {filter_col} Value", ["All"] + unique_values)
+    except Exception as e:
+        st.error(f"Error Fetching Google Sheets: {e}")
 
-                # Apply filtering
-                if selected_value != "All":
-                    df = df[df[filter_col] == selected_value]
-
-                # Display Filtered Data
-                st.write("**🔹 Filtered Google Sheets Data:**")
-                st.table(df)
-
-            else:
-                st.warning(" No data found in the sheet.")
-
-        except Exception as e:
-            st.error(f" Error Fetching Google Sheets: {e}")
-
-    else:
-        st.error("Incorrect username or password!")
+    # 🔹 Logout Button
+    if st.button("Logout"):
+        st.session_state.logged_in = False  # Reset login state
+        st.rerun()  # Refresh to show login page
