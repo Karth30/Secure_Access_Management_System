@@ -53,21 +53,25 @@ st.table(df[df[selected_column] == filter_value])
 RESULTS:
 
 ![image](https://github.com/user-attachments/assets/a2abf155-ef3e-4d75-903a-f0563c21a400)
+
  Image of ACCESS GRANTED condition
 
 ![image](https://github.com/user-attachments/assets/aefea983-6610-4278-af8c-3cb4346964b0)
+
  Image of ACCESS denied condition
 
  The Google Sheet remained synchronized in real-time, with timestamps accurate to the
 second.
 
 ![image](https://github.com/user-attachments/assets/79d6be10-e9e2-40a4-b67f-13ae25f2189c)
+
 Google Sheet with Sample Entries
 
 The Streamlit dashboard performed reliably across devices, providing fast and
 filterable access insights.
 
 ![image](https://github.com/user-attachments/assets/7b0551a5-aec7-4a83-bd4a-ef0241adde8b)
+
  Dashboard UI and Filtered Table
 
  CONCLUSION:
