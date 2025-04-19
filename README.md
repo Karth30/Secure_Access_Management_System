@@ -1,9 +1,11 @@
 # Secure_Access_Management_System
 
 INTRODUCTION:
+
 This project introduces a refined approach to automating access control by integrating Radio Frequency Identification (RFID) technology with Internet of Things (IoT) capabilities. In institutions and organizations, ensuring secure and efficient entry management is crucial for maintaining safety and operational integrity. Traditional access systems—such as manual logs or physical ID checks—are often inefficient, time-consuming, and prone to errors or manipulation. In response to these limitations, this work presents an IoT-enabled RFID-based access control system that ensures accurate, real-time, and tamper-proof monitoring of entry attempts. Despite the availability of modern technologies, many facilities still rely on outdated manual verification methods. Security personnel often verify identities visually or record entries on paper, which may lead to delays, inconsistencies, and limited traceability. This system aims to address such challenges by leveraging RFID technology combined with cloud-based storage and web interfaces. The proposed solution utilizes RFID for identity verification, the ESP8266 NodeMCU for connectivity, and Google Sheets for real-time data logging via Google Apps Script (GAS) and Google API integration.To enhance administrative control and usability, a web-based dashboard is developed using the Streamlit framework. This dashboard provides visual access logs and user-specific activity records through an intuitive, interactive interface.
 
 Note:
+
 RFID(Radio-Frequency Identification) is an automatic identification system that uses electromagnetic fields to transfer data between a RFID reader and an RFID tag. It is a contactless communication that enables storage and retrieval of information from a source.
 
 
@@ -26,6 +28,7 @@ HARDWARE SETUP:
 ● The access attempt (UID, timestamp, result) is sent to the cloud using HTTP
 
 REAL- TIME LOGGING VIA GOOGLE SCRIPTS:
+
 ● The ESP8266 sends a GET request to a published Web App URL.
 ● Google Apps Script captures the parameters and appends a new row in the Sheet. (javascript)
 function doGet(e) {
@@ -36,6 +39,7 @@ function doGet(e) {
  ![image](https://github.com/user-attachments/assets/2567f8b0-2abe-4d74-9bfc-9ca720b4de80)
 
  STREAMLIT-BASED ADMIN DASHBOARD:
+ 
 Developed using Python’s Streamlit and GSpread, the dashboard allows for:
 ● Secure admin login
 ● Visual tabular display of logs
@@ -67,6 +71,7 @@ filterable access insights.
  Dashboard UI and Filtered Table
 
  CONCLUSION:
+ 
 The was aimed to get effective and efficient time-saving automated computerized access in real-time with a ready excel sheet to maintain access records. T is he conclusion that this user-friendly proposed system can be proved to be easy to use and implement, cost efficient, time-saving, less tedious, and portable
 
 
