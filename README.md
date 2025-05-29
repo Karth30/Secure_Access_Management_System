@@ -76,7 +76,7 @@ filterable access insights.
 
  CONCLUSION:
  
-The was aimed to get effective and efficient time-saving automated computerized access in real-time with a ready excel sheet to maintain access records. T is he conclusion that this user-friendly proposed system can be proved to be easy to use and implement, cost efficient, time-saving, less tedious, and portable
+The project was aimed to get effective and efficient time-saving automated computerized access in real-time with a excel sheet to maintain access records. The implemented system proved to be easy to use and implement, cost efficient, time-saving, less tedious, and portable
 
 
 
